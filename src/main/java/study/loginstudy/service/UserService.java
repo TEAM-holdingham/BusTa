@@ -1,7 +1,6 @@
 package study.loginstudy.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -16,18 +15,15 @@ import study.loginstudy.domain.dto.LoginRequest;
 import study.loginstudy.domain.dto.UserProfile;
 import study.loginstudy.domain.entity.PasswordResetToken;
 import study.loginstudy.domain.entity.User;
+import study.loginstudy.repository.EmailVerificationTokenRepository;
 import study.loginstudy.repository.FriendRequestRepository;
 import study.loginstudy.repository.PasswordResetTokenRepository;
 import study.loginstudy.repository.UserRepository;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -42,6 +38,7 @@ public class UserService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
     private final ProfileProperties profileProperties;
+    private final EmailVerificationTokenRepository emailVerificationTokenRepository;
 
     public User findByNickname(String nickname) {
         Optional<User> userOpt = userRepository.findByNickname(nickname);
@@ -56,11 +53,17 @@ public class UserService {
         return userRepository.existsByNickname(nickname);
     }
 
-    public void join(JoinRequest req) {
-        userRepository.save(req.toEntity());
-    }
+//    public void join(JoinRequest req) {
+//        if (!emailVerificationTokenRepository.findByLoginId(req.getLoginId()).isPresent()) {
+//            throw new IllegalArgumentException("Email not verified");
+//        }
+//        userRepository.save(req.toEntity());
+//    }
 
     public void join2(JoinRequest req) {
+        if (!emailVerificationTokenRepository.findByLoginId(req.getLoginId()).isPresent()) {
+            throw new IllegalArgumentException("Email not verified");
+        }
         userRepository.save(req.toEntity(encoder.encode(req.getPassword())));
     }
 
@@ -113,10 +116,6 @@ public class UserService {
         friendRequestRepository.deleteByReceiverId(user.getId());
 
         userRepository.delete(user);
-    }
-
-    public User findByLoginId(String username) {
-        return null;
     }
 
     public void sendPasswordResetEmail(String loginId) {
@@ -187,4 +186,22 @@ public class UserService {
 
         userRepository.save(user);
     }
+    public User findByLoginId(String loginId) {
+        return userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with login ID: " + loginId));
+    }
+
+    public List<User> findUsersByNicknameStartingWith(String nickname) {
+        return userRepository.findByNicknameStartingWith(nickname);
+    }
+
+    public List<User> findUsersByNicknameStartingWithExcludingCurrentUser(String nickname, String currentUserNickname) {
+        return userRepository.findByNicknameStartingWithAndNicknameNot(nickname, currentUserNickname);
+    }
+
+    public String getNicknameByLoginId(String loginId) {
+        Optional<User> user = userRepository.findByLoginId(loginId);
+        return user.isPresent() ? user.get().getNickname() : null;
+    }
+
 }

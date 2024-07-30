@@ -42,6 +42,17 @@ public class User {
     private String provider;
     private String providerId;
 
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }
+
+    @Builder.Default
+    private boolean emailVerified = false; // 이메일 인증 상태 추가
+
     @OneToMany(mappedBy = "sender")
     @JsonBackReference
     private List<FriendRequest> sentRequests;

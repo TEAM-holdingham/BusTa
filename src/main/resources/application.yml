@@ -9,8 +9,8 @@ spring:
 #    password:  #DB 비밀번호
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-#    url: jdbc:mariadb://svc.sel4.cloudtype.app:31310/test
-    url: jdbc:mariadb://localhost:3306/test
+    url: jdbc:mariadb://svc.sel4.cloudtype.app:31310/test
+#    url: jdbc:mariadb://localhost:3306/test
     username: root
     password: 1204
 

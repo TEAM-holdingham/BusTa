@@ -9,6 +9,7 @@ import study.loginstudy.repository.EmailVerificationTokenRepository;
 import study.loginstudy.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,19 +47,17 @@ public class EmailVerificationService {
             return false;
         }
 
-        User user = userRepository.findByLoginId(verificationToken.getLoginId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        verificationToken.setVerified(true);
+        tokenRepository.save(verificationToken);
 
-        user.setEmailVerified(true);
-        userRepository.save(user);
-
-        tokenRepository.delete(verificationToken);
-
+        System.out.println("Verification completed for token: " + token);
         return true;
     }
+
     public boolean isEmailVerified(String loginId) {
-        Optional<User> userOptional = userRepository.findByLoginId(loginId);
-        return userOptional.isPresent() && userOptional.get().isEmailVerified();
+        List<EmailVerificationToken> tokens = tokenRepository.findByLoginId(loginId);
+        System.out.println("Tokens found for loginId: " + loginId + ": " + tokens);
+        tokens.forEach(token -> System.out.println("Token: " + token.getToken() + ", Verified: " + token.isVerified()));
+        return tokens.stream().anyMatch(EmailVerificationToken::isVerified);
     }
 }
-

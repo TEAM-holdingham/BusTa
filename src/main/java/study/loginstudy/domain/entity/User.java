@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Builder
@@ -41,6 +42,15 @@ public class User {
     // OAuth 로그인에 사용
     private String provider;
     private String providerId;
+
+    // timer와 연동
+    @OneToMany(mappedBy = "user")
+    private Set<Timer> timers;
+
+    // todolist와 연동
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<ToDoList> toDoLists;
 
     public boolean isEmailVerified() {
         return emailVerified;
@@ -109,4 +119,22 @@ public class User {
     public void setReceivedRequests(List<FriendRequest> receivedRequests) {
         this.receivedRequests = receivedRequests;
     }
+
+    public Set<Timer> getTimers() {
+        return timers;
+    }
+
+    public void setTimers(Set<Timer> timers) {
+        this.timers = timers;
+    }
+
+    // toDoLists의 Getter와 Setter
+    public List<ToDoList> getToDoLists() {
+        return toDoLists;
+    }
+
+    public void setToDoLists(List<ToDoList> toDoLists) {
+        this.toDoLists = toDoLists;
+    }
 }
+

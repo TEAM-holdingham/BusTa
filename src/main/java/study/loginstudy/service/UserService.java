@@ -13,6 +13,7 @@ import study.loginstudy.domain.dto.EmailMessage;
 import study.loginstudy.domain.dto.JoinRequest;
 import study.loginstudy.domain.dto.LoginRequest;
 import study.loginstudy.domain.dto.UserProfile;
+import study.loginstudy.domain.entity.EmailVerificationToken;
 import study.loginstudy.domain.entity.PasswordResetToken;
 import study.loginstudy.domain.entity.User;
 import study.loginstudy.repository.EmailVerificationTokenRepository;
@@ -39,6 +40,7 @@ public class UserService {
     private final EmailService emailService;
     private final ProfileProperties profileProperties;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
+    private final EmailVerificationService emailVerificationService;
 
     public User findByNickname(String nickname) {
         Optional<User> userOpt = userRepository.findByNickname(nickname);
@@ -61,11 +63,14 @@ public class UserService {
 //    }
 
     public void join2(JoinRequest req) {
-        if (!emailVerificationTokenRepository.findByLoginId(req.getLoginId()).isPresent()) {
+        System.out.println("Checking email verification for: " + req.getLoginId());
+        if (!emailVerificationService.isEmailVerified(req.getLoginId())) {
             throw new IllegalArgumentException("Email not verified");
         }
         userRepository.save(req.toEntity(encoder.encode(req.getPassword())));
+        emailVerificationTokenRepository.deleteByLoginId(req.getLoginId()); // 이메일 인증 후 토큰 삭제
     }
+
 
     public User login(LoginRequest req) {
         Optional<User> optionalUser = userRepository.findByLoginId(req.getLoginId());

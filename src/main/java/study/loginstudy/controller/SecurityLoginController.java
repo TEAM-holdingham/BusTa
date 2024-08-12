@@ -19,6 +19,7 @@ import study.loginstudy.service.UserService;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
+import java.util.Objects;
 
 @Controller
 @RequiredArgsConstructor
@@ -59,9 +60,14 @@ public class SecurityLoginController {
             bindingResult.addError(new FieldError("joinRequest", "nickname", "닉네임이 중복됩니다."));
         }
         // password와 passwordCheck가 같은지 체크
-        if(!joinRequest.getPassword().equals(joinRequest.getPasswordCheck())) {
-            bindingResult.addError(new FieldError("joinRequest", "passwordCheck", "바밀번호가 일치하지 않습니다."));
+        //if(!joinRequest.getPassword().equals(joinRequest.getPasswordCheck())) {
+          //  bindingResult.addError(new FieldError("joinRequest", "passwordCheck", "바밀번호가 일치하지 않습니다."));
+        //}
+        //변경 부분(8.12)
+        if (!Objects.equals(joinRequest.getPassword(), joinRequest.getPasswordCheck())) {
+            bindingResult.addError(new FieldError("joinRequest", "passwordCheck", "비밀번호가 일치하지 않습니다."));
         }
+
 
         if(bindingResult.hasErrors()) {
             return "join";

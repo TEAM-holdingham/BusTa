@@ -1,9 +1,13 @@
 package study.loginstudy.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.annotation.Secured;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -19,7 +23,8 @@ import study.loginstudy.service.UserService;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -30,27 +35,23 @@ public class SecurityLoginController {
 
     @GetMapping(value = {"", "/"})
     public String loginhome(Model model, Authentication auth) {
-
         if(auth != null) {
             User loginUser = userService.getLoginUserByLoginId(auth.getName());
             if (loginUser != null) {
                 model.addAttribute("nickname", loginUser.getNickname());
             }
         }
-
         return "loginhome";
     }
 
     @GetMapping("/join")
     public String joinPage(Model model) {
-
         model.addAttribute("joinRequest", new JoinRequest());
         return "join";
     }
 
     @PostMapping("/join")
     public String join(@Valid @ModelAttribute JoinRequest joinRequest, BindingResult bindingResult) {
-
         // loginId 중복 체크
         if(userService.checkLoginIdDuplicate(joinRequest.getLoginId())) {
             bindingResult.addError(new FieldError("joinRequest", "loginId", "로그인 아이디가 중복됩니다."));
@@ -60,14 +61,9 @@ public class SecurityLoginController {
             bindingResult.addError(new FieldError("joinRequest", "nickname", "닉네임이 중복됩니다."));
         }
         // password와 passwordCheck가 같은지 체크
-        //if(!joinRequest.getPassword().equals(joinRequest.getPasswordCheck())) {
-          //  bindingResult.addError(new FieldError("joinRequest", "passwordCheck", "바밀번호가 일치하지 않습니다."));
-        //}
-        //변경 부분(8.12)
-        if (!Objects.equals(joinRequest.getPassword(), joinRequest.getPasswordCheck())) {
+        if(!joinRequest.getPassword().equals(joinRequest.getPasswordCheck())) {
             bindingResult.addError(new FieldError("joinRequest", "passwordCheck", "비밀번호가 일치하지 않습니다."));
         }
-
 
         if(bindingResult.hasErrors()) {
             return "join";
@@ -84,17 +80,15 @@ public class SecurityLoginController {
     }
 
     @GetMapping("/info")
-    //@PreAuthorize("hasAnyAuthority('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'USER')")
     public String userInfo(Model model, Authentication auth) {
-
         User loginUser = userService.getLoginUserByLoginId(auth.getName());
         model.addAttribute("user", loginUser);
-
         return "info";
     }
 
     @GetMapping("/admin")
-    //@PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public String adminPage() {
         return "admin";
     }
@@ -108,8 +102,8 @@ public class SecurityLoginController {
     public String authorizationFail() {
         return "errorPage/authorizationFail";
     }
-    @GetMapping("/nickname")
 
+    @GetMapping("/nickname")
     public String getNicknameByLoginId(@RequestParam("loginId") String loginId) {
         try {
             return userService.findNicknameByLoginId(loginId);
@@ -117,7 +111,6 @@ public class SecurityLoginController {
             return e.getMessage();
         }
     }
-
 
     @GetMapping("/my_page")
     public String myPage(Model model, Authentication authentication) {
@@ -140,5 +133,32 @@ public class SecurityLoginController {
         userService.deleteAccount(loginId);
         session.invalidate();  // 세션 무효화
         return "redirect:/"; // 첫 화면으로 리다이렉트
+    }
+
+    // API 엔드포인트 추가
+
+    @PostMapping("/api/login")
+    public ResponseEntity<Map<String, Object>> apiLogin(HttpServletRequest request) {
+        Map<String, Object> response = new HashMap<>();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            User loginUser = userService.getLoginUserByLoginId(auth.getName());
+            response.put("status", "success");
+            response.put("user", loginUser);
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("status", "failure");
+            response.put("message", "로그인 실패");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+    }
+
+    @PostMapping("/api/logout")
+    public ResponseEntity<Map<String, Object>> apiLogout(HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        session.invalidate();  // 세션 무효화
+        response.put("status", "success");
+        response.put("message", "로그아웃 성공");
+        return ResponseEntity.ok(response);
     }
 }

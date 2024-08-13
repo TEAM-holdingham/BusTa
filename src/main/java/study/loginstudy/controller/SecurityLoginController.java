@@ -1,9 +1,12 @@
 package study.loginstudy.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -19,6 +22,8 @@ import study.loginstudy.service.UserService;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 @Controller
@@ -140,5 +145,31 @@ public class SecurityLoginController {
         userService.deleteAccount(loginId);
         session.invalidate();  // 세션 무효화
         return "redirect:/"; // 첫 화면으로 리다이렉트
+    }
+    // API 엔드포인트 추가
+
+    @PostMapping("/api/login")
+    public ResponseEntity<Map<String, Object>> apiLogin(HttpServletRequest request) {
+        Map<String, Object> response = new HashMap<>();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            User loginUser = userService.getLoginUserByLoginId(auth.getName());
+            response.put("status", "success");
+            response.put("user", loginUser);
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("status", "failure");
+            response.put("message", "로그인 실패");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+    }
+
+    @PostMapping("/api/logout")
+    public ResponseEntity<Map<String, Object>> apiLogout(HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        session.invalidate();  // 세션 무효화
+        response.put("status", "success");
+        response.put("message", "로그아웃 성공");
+        return ResponseEntity.ok(response);
     }
 }

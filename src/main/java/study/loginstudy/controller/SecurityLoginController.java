@@ -184,4 +184,50 @@ public class SecurityLoginController {
         response.put("message", "로그아웃 성공");
         return ResponseEntity.ok(response);
     }
+
+    //마이페이지 json 형식으로 반환(08.14)
+    @GetMapping("/api/my_page")
+    public ResponseEntity<Map<String, Object>> apiMyPage(Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+
+        // 현재 로그인한 사용자의 loginId 가져오기
+        String loginId = authentication.getName();
+
+        // 유저 서비스에서 사용자 정보 조회
+        User user = userService.findByLoginId(loginId);
+
+        if (user != null) {
+            response.put("status", "success");
+            response.put("user", user);
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("status", "failure");
+            response.put("message", "사용자 정보를 찾을 수 없습니다.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+    }
+
+    //UserInfo json 형식으로 반환(08.14)
+    @GetMapping("/api/info")
+    public ResponseEntity<Map<String, Object>> apiUserInfo(Authentication auth) {
+        Map<String, Object> response = new HashMap<>();
+
+        // 현재 로그인한 사용자의 loginId 가져오기
+        String loginId = auth.getName();
+
+        // 유저 서비스에서 사용자 정보 조회
+        User loginUser = userService.getLoginUserByLoginId(loginId);
+
+        if (loginUser != null) {
+            response.put("status", "success");
+            response.put("user", loginUser);
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("status", "failure");
+            response.put("message", "사용자 정보를 찾을 수 없습니다.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+    }
+
+
 }

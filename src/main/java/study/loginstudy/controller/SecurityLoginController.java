@@ -117,8 +117,8 @@ public class SecurityLoginController {
     public String authorizationFail() {
         return "errorPage/authorizationFail";
     }
-    @GetMapping("/nickname")
 
+    @GetMapping("/nickname")
     public String getNicknameByLoginId(@RequestParam("loginId") String loginId) {
         try {
             return userService.findNicknameByLoginId(loginId);
@@ -232,6 +232,141 @@ public class SecurityLoginController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
+
+    //return 값이 loginhome -> json 변환
+    @GetMapping(value = {"/api", "/api/"})
+    public ResponseEntity<Map<String, Object>> apiLoginHome(Authentication auth) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (auth != null) {
+            // 현재 로그인한 사용자의 loginId 가져오기
+            User loginUser = userService.getLoginUserByLoginId(auth.getName());
+
+            if (loginUser != null) {
+                response.put("status", "success");
+                response.put("nickname", loginUser.getNickname());
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("status", "failure");
+                response.put("message", "사용자 정보를 찾을 수 없습니다.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+        } else {
+            response.put("status", "unauthenticated");
+            response.put("message", "인증된 사용자가 없습니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+    }
+
+    @GetMapping("/api/join")
+    public ResponseEntity<Map<String, Object>> apiJoinPage() {
+        Map<String, Object> response = new HashMap<>();
+
+        // 새로운 JoinRequest 객체를 생성하여 반환
+        JoinRequest joinRequest = new JoinRequest();
+
+        response.put("status", "success");
+        response.put("joinRequest", joinRequest);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/api/join")
+    public ResponseEntity<Map<String, Object>> apiJoin(@Valid @RequestBody JoinRequest joinRequest, BindingResult bindingResult) {
+        Map<String, Object> response = new HashMap<>();
+
+        // loginId 중복 체크
+        if (userService.checkLoginIdDuplicate(joinRequest.getLoginId())) {
+            bindingResult.addError(new FieldError("joinRequest", "loginId", "로그인 아이디가 중복됩니다."));
+        }
+        // 닉네임 중복 체크
+        if (userService.checkNicknameDuplicate(joinRequest.getNickname())) {
+            bindingResult.addError(new FieldError("joinRequest", "nickname", "닉네임이 중복됩니다."));
+        }
+        // password와 passwordCheck가 같은지 체크
+        if (!Objects.equals(joinRequest.getPassword(), joinRequest.getPasswordCheck())) {
+            bindingResult.addError(new FieldError("joinRequest", "passwordCheck", "비밀번호가 일치하지 않습니다."));
+        }
+
+        // 입력 값에 오류가 있는 경우
+        if (bindingResult.hasErrors()) {
+            response.put("status", "failure");
+            response.put("errors", bindingResult.getAllErrors());
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        // 유저 서비스에서 회원가입 처리
+        userService.join2(joinRequest);
+
+        response.put("status", "success");
+        response.put("message", "회원가입이 성공적으로 완료되었습니다.");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/api/admin")
+// @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<Map<String, Object>> apiAdminPage() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "관리자 페이지에 접근할 수 있습니다.");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/api/authentication-fail")
+    public ResponseEntity<Map<String, Object>> apiAuthenticationFail() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "failure");
+        response.put("message", "인증에 실패했습니다.");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @GetMapping("/api/authorization-fail")
+    public ResponseEntity<Map<String, Object>> apiAuthorizationFail() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "failure");
+        response.put("message", "권한이 부족하여 접근할 수 없습니다.");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    @GetMapping("/api/nickname")
+    public ResponseEntity<Map<String, Object>> apiGetNicknameByLoginId(@RequestParam("loginId") String loginId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            String nickname = userService.findNicknameByLoginId(loginId);
+            response.put("status", "success");
+            response.put("nickname", nickname);
+            return ResponseEntity.ok(response);
+        } catch (UserNotFoundException e) {
+            response.put("status", "failure");
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+    }
+
+    @GetMapping("/api/confirm-delete")
+    public ResponseEntity<Map<String, Object>> apiConfirmDelete(Authentication authentication) {
+        String loginId = authentication.getName(); // 현재 로그인한 사용자 정보 가져오기
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("loginId", loginId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/api/delete-account")
+    public ResponseEntity<Map<String, Object>> apiDeleteAccount(HttpSession session, Authentication authentication) {
+        String loginId = authentication.getName(); // 현재 로그인한 사용자 정보 가져오기
+        userService.deleteAccount(loginId);
+        session.invalidate();  // 세션 무효화
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "계정이 성공적으로 삭제되었습니다.");
+
+        return ResponseEntity.ok(response);
+    }
+
 
 
 }

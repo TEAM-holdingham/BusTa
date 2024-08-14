@@ -58,12 +58,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080")); // CORS 허용 출처
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:8080",
+                "http://127.0.0.1:8080",
+                "https://port-0-busta-lyumntwj5a7765e6.sel4.cloudtype.app"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowCredentials(true);
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setExposedHeaders(Arrays.asList("Authorization", "Link"));
-        configuration.setMaxAge(3600L); // 3600초 동안 pre-flight 결과 캐싱
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

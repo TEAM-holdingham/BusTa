@@ -149,18 +149,30 @@ public class SecurityLoginController {
     // API 엔드포인트 추가
 
     @PostMapping("/api/login")
-    public ResponseEntity<Map<String, Object>> apiLogin(HttpServletRequest request) {
-        Map<String, Object> response = new HashMap<>();
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated()) {
-            User loginUser = userService.getLoginUserByLoginId(auth.getName());
+    public ResponseEntity<?> apiLogin(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+        try {
+            // Spring Security의 AuthenticationManager를 사용하여 인증
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getLoginId(), loginRequest.getPassword())
+            );
+
+            // 인증 성공 시 SecurityContext에 저장
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // 세션 생성
+            HttpSession session = request.getSession(true);
+
+            // 사용자 정보 조회
+            User user = userService.getLoginUserByLoginId(authentication.getName());
+
+            Map<String, Object> response = new HashMap<>();
             response.put("status", "success");
-            response.put("user", loginUser);
+            response.put("sessionId", session.getId());
+            response.put("user", user);
+
             return ResponseEntity.ok(response);
-        } else {
-            response.put("status", "failure");
-            response.put("message", "로그인 실패");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username/password");
         }
     }
 

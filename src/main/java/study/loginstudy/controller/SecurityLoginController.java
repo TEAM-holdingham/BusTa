@@ -164,15 +164,19 @@ public class SecurityLoginController {
             // 인증 성공 시 SecurityContext에 저장
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            // 세션 생성
-            HttpSession session = request.getSession(true);
-
             // 사용자 정보 조회
-            User user = userService.getLoginUserByLoginId(authentication.getName());
+            String loginId = authentication.getName();
+            System.out.println("Login ID: " + loginId);  // 디버깅을 위한 로그
+            User user = userService.getLoginUserByLoginId(loginId);
 
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
             }
+
+
+            // 세션 생성
+            HttpSession session = request.getSession(true);
+
 
             Map<String, Object> response = new HashMap<>();
             response.put("status", "success");

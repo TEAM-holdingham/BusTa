@@ -192,6 +192,7 @@ public class SecurityLoginController {
     //마이페이지 json 형식으로 반환(08.14)
     @GetMapping("/api/my-page")
     public ResponseEntity<Map<String, Object>> apiMyPage(Authentication authentication) {
+        logger.info("API my-page 요청 받음"); // 디버그용 로그 추가함
         Map<String, Object> response = new HashMap<>();
 
         if (authentication == null) {

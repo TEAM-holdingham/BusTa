@@ -193,7 +193,9 @@ public class SecurityLoginController {
     //마이페이지 json 형식으로 반환(08.14)
     @GetMapping("/api/my-page")
     public ResponseEntity<Map<String, Object>> apiMyPage(Authentication authentication) {
-        logger.info("API my-page 요청 받음"); // 디버그용 로그 추가함
+        // 로깅 추가
+        System.out.println("API my-page 요청 받음");
+
         Map<String, Object> response = new HashMap<>();
 
         if (authentication == null) {
@@ -202,10 +204,7 @@ public class SecurityLoginController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
 
-        // 현재 로그인한 사용자의 loginId 가져오기
         String loginId = authentication.getName();
-
-        // 유저 서비스에서 사용자 정보 조회
         User user = userService.findByLoginId(loginId);
 
         if (user != null) {

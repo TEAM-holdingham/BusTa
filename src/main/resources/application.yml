@@ -45,6 +45,10 @@ spring:
     picture:
       path: C:/Holham/proFileImage
 
+  # 필터 체인 확인을 위해 추가
+  logging:
+    level:
+      org.springframework.security: DEBUG
 
 
   # OAuth 로그인

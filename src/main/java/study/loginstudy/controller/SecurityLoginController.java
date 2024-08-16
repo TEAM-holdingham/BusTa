@@ -194,6 +194,12 @@ public class SecurityLoginController {
     public ResponseEntity<Map<String, Object>> apiMyPage(Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
 
+        if (authentication == null) {
+            response.put("status", "failure");
+            response.put("message", "인증되지 않은 사용자입니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
         // 현재 로그인한 사용자의 loginId 가져오기
         String loginId = authentication.getName();
 

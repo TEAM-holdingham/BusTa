@@ -37,6 +37,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/security-login/api/my-page").authenticated() // 이 줄을 추가하거나 수정
                 .antMatchers("/api/timer/**").authenticated()
                 .antMatchers("/security-login/api/admin/**").hasAuthority(UserRole.ADMIN.name())
+                .antMatchers("/profile/api/**").authenticated()
                 .anyRequest().permitAll()
                 .and()
                 .formLogin()

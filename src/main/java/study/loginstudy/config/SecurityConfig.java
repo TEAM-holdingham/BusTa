@@ -33,6 +33,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/api/login").permitAll()
                 .antMatchers("/api/todolist/**").authenticated()
+                .antMatchers("/security-login/api/login").permitAll()
                 .antMatchers("/security-login/api/my-page").authenticated()
                 .antMatchers("/api/timer/**").authenticated()
                 .antMatchers("/security-login/api/admin/**").hasAuthority(UserRole.ADMIN.name())

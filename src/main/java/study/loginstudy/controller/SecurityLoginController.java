@@ -190,7 +190,7 @@ public class SecurityLoginController {
     }
 
     //마이페이지 json 형식으로 반환(08.14)
-    @GetMapping("/api/my_page")
+    @GetMapping("/api/my-page")
     public ResponseEntity<Map<String, Object>> apiMyPage(Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
 

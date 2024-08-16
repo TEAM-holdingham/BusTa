@@ -154,40 +154,29 @@ public class SecurityLoginController {
     // API 엔드포인트 추가
 
     @PostMapping("/api/login")
-    public ResponseEntity<?> apiLogin(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
-        try {
-            // Spring Security의 AuthenticationManager를 사용하여 인증
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.getLoginId(), loginRequest.getPassword())
-            );
+    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequest loginRequest) {
+        Map<String, Object> response = new HashMap<>();
 
-            // 인증 성공 시 SecurityContext에 저장
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        // 현재 인증된 사용자 정보 가져오기
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
 
-            // 사용자 정보 조회
-            String loginId = authentication.getName();
-            System.out.println("Login ID: " + loginId);  // 디버깅을 위한 로그
-            User user = userService.getLoginUserByLoginId(loginId);
+        // 사용자 정보 조회
+        User user = userService.getLoginUserByLoginId(username);
 
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
-            }
-
-
-            // 세션 생성
-            HttpSession session = request.getSession(true);
-
-
-            Map<String, Object> response = new HashMap<>();
+        // 로그인 인증 처리
+        if (user != null && user.getPassword().equals(loginRequest.getPassword())) {
             response.put("status", "success");
-            response.put("sessionId", session.getId());
-            response.put("user", user);
-
-            return ResponseEntity.ok(response);
-        } catch (AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username/password");
+            response.put("message", "로그인 성공");
+            response.put("user", user); // 사용자 정보 포함
+        } else {
+            response.put("status", "error");
+            response.put("message", "로그인 실패: 사용자 이름 또는 비밀번호가 올바르지 않습니다.");
         }
+
+        return ResponseEntity.ok(response);
     }
+
 
     @PostMapping("/api/logout")
     public ResponseEntity<Map<String, Object>> apiLogout(HttpSession session) {

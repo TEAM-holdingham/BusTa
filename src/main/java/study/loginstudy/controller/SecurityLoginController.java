@@ -170,6 +170,10 @@ public class SecurityLoginController {
             // 사용자 정보 조회
             User user = userService.getLoginUserByLoginId(authentication.getName());
 
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+            }
+
             Map<String, Object> response = new HashMap<>();
             response.put("status", "success");
             response.put("sessionId", session.getId());

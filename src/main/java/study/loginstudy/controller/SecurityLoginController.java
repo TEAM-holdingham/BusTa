@@ -154,29 +154,32 @@ public class SecurityLoginController {
     // API 엔드포인트 추가
 
     @PostMapping("/api/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequest loginRequest) {
-        Map<String, Object> response = new HashMap<>();
+    public ResponseEntity<?> apiLogin(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+        try {
+            // Spring Security의 AuthenticationManager를 사용하여 인증
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getLoginId(), loginRequest.getPassword())
+            );
 
-        // 현재 인증된 사용자 정보 가져오기
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
+            // 인증 성공 시 SecurityContext에 저장
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // 사용자 정보 조회
-        User user = userService.getLoginUserByLoginId(username);
+            // 세션 생성
+            HttpSession session = request.getSession(true);
 
-        // 로그인 인증 처리
-        if (user != null && user.getPassword().equals(loginRequest.getPassword())) {
+            // 사용자 정보 조회
+            User user = userService.getLoginUserByLoginId(authentication.getName());
+
+            Map<String, Object> response = new HashMap<>();
             response.put("status", "success");
-            response.put("message", "로그인 성공");
-            response.put("user", user); // 사용자 정보 포함
-        } else {
-            response.put("status", "error");
-            response.put("message", "로그인 실패: 사용자 이름 또는 비밀번호가 올바르지 않습니다.");
+            response.put("sessionId", session.getId());
+            response.put("user", user);
+
+            return ResponseEntity.ok(response);
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username/password");
         }
-
-        return ResponseEntity.ok(response);
     }
-
 
     @PostMapping("/api/logout")
     public ResponseEntity<Map<String, Object>> apiLogout(HttpSession session) {

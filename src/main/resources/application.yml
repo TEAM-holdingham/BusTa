@@ -2,6 +2,7 @@ spring:
   server:
     port: 8080
 
+
 #  datasource:
 #    driver-class-name: com.mysql.cj.jdbc.Driver
 #    url: jdbc:mysql://localhost:3306/test
@@ -49,6 +50,14 @@ spring:
   logging:
     level:
       org.springframework.security: DEBUG
+
+  #secure 설정 추가
+  servlet:
+    session:
+      cookie:
+        secure: true
+
+
 
 
   # OAuth 로그인

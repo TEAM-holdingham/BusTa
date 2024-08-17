@@ -23,13 +23,16 @@ import study.loginstudy.domain.entity.User;
 import study.loginstudy.service.UserService;
 import org.springframework.web.bind.annotation.RestController; //추가
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.HttpHeaders;
 @RestController // controller -> restcontroller
 @RequiredArgsConstructor
 @RequestMapping("/security-login")
@@ -153,8 +156,37 @@ public class SecurityLoginController {
     }
     // API 엔드포인트 추가
 
+//    @PostMapping("/api/login")
+//    public ResponseEntity<?> apiLogin(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+//        try {
+//            // Spring Security의 AuthenticationManager를 사용하여 인증
+//            Authentication authentication = authenticationManager.authenticate(
+//                    new UsernamePasswordAuthenticationToken(loginRequest.getLoginId(), loginRequest.getPassword())
+//            );
+//
+//            // 인증 성공 시 SecurityContext에 저장
+//            SecurityContextHolder.getContext().setAuthentication(authentication);
+//
+//            // 세션 생성
+//            HttpSession session = request.getSession(true);
+//
+//            // 사용자 정보 조회
+//            User user = userService.getLoginUserByLoginId(authentication.getName());
+//
+//            Map<String, Object> response = new HashMap<>();
+//            response.put("status", "success");
+//            response.put("sessionId", session.getId());
+//            response.put("user", user);
+//
+//            return ResponseEntity.ok(response);
+//        } catch (AuthenticationException e) {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username/password");
+//        }
+//    }
+
+
     @PostMapping("/api/login")
-    public ResponseEntity<?> apiLogin(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+    public ResponseEntity<?> apiLogin(@RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
         try {
             // Spring Security의 AuthenticationManager를 사용하여 인증
             Authentication authentication = authenticationManager.authenticate(
@@ -170,16 +202,30 @@ public class SecurityLoginController {
             // 사용자 정보 조회
             User user = userService.getLoginUserByLoginId(authentication.getName());
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", "success");
-            response.put("sessionId", session.getId());
-            response.put("user", user);
+            // ResponseCookie를 사용하여 SameSite 속성을 포함한 쿠키 생성
+            ResponseCookie cookie = ResponseCookie.from("JSESSIONID", session.getId())
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/")
+                    .maxAge(7 * 24 * 60 * 60)  // 7일 동안 유효
+                    .sameSite("None")
+                    .build();
 
-            return ResponseEntity.ok(response);
+            // 쿠키를 응답 헤더에 추가
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("status", "success");
+            responseBody.put("sessionId", session.getId());
+            responseBody.put("user", user);
+
+            return ResponseEntity.ok(responseBody);
         } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username/password");
         }
     }
+
+
 
     @PostMapping("/api/logout")
     public ResponseEntity<Map<String, Object>> apiLogout(HttpSession session) {

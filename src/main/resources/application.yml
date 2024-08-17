@@ -51,11 +51,7 @@ spring:
     level:
       org.springframework.security: DEBUG
 
-  #secure 설정 추가
-  servlet:
-    session:
-      cookie:
-        secure: true
+
 
 
 

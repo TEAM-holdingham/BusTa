@@ -18,8 +18,6 @@ import study.loginstudy.domain.UserRole;
 
 import java.util.Arrays;
 
-import static javax.management.Query.and;
-
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -43,7 +41,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/profile/api/**").authenticated()
                 .anyRequest().permitAll()
                 .and()
-                .sessionManagement()  // 이 위치로 이동
+                .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // 세션이 필요할 때만 생성
                 .and()
                 .formLogin()
@@ -78,7 +76,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(true);  // withCredentials를 허용
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
         configuration.setMaxAge(3600L);
 
@@ -93,8 +91,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return super.authenticationManagerBean();
     }
 
-//    @Bean
-//    public PasswordEncoder passwordEncoder() {
-//        return new BCryptPasswordEncoder();
-//    }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }

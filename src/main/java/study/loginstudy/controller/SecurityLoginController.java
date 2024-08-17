@@ -183,7 +183,7 @@ public class SecurityLoginController {
 //            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username/password");
 //        }
 //    }
-
+    
 
     @PostMapping("/api/login")
     public ResponseEntity<?> apiLogin(@RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
@@ -202,13 +202,17 @@ public class SecurityLoginController {
             // 사용자 정보 조회
             User user = userService.getLoginUserByLoginId(authentication.getName());
 
-            // ResponseCookie를 사용하여 SameSite 속성을 포함한 쿠키 생성
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+            }
+
+            // 쿠키 설정
             ResponseCookie cookie = ResponseCookie.from("JSESSIONID", session.getId())
                     .httpOnly(true)
-                    .secure(true)
+                    .secure(true)  // HTTPS를 사용하므로 true로 설정
                     .path("/")
                     .maxAge(7 * 24 * 60 * 60)  // 7일 동안 유효
-                    .sameSite("None")
+                    .sameSite("None")  // Cross-Site 요청에서도 쿠키 전송
                     .build();
 
             // 쿠키를 응답 헤더에 추가
@@ -224,6 +228,7 @@ public class SecurityLoginController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username/password");
         }
     }
+
 
 
 

@@ -23,7 +23,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name="loginId")
     private String loginId;
+    
     private String password;
     @Column(unique = true)
     private String nickname;

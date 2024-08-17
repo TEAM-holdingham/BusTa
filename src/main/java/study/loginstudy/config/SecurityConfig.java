@@ -7,6 +7,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.cors.CorsConfiguration;
@@ -16,6 +17,8 @@ import study.loginstudy.auth.oauth.PrincipalOauth2UserService;
 import study.loginstudy.domain.UserRole;
 
 import java.util.Arrays;
+
+import static javax.management.Query.and;
 
 @Configuration
 @EnableWebSecurity
@@ -34,11 +37,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/login").permitAll()
                 .antMatchers("/api/todolist/**").authenticated()
                 .antMatchers("/security-login/api/login").permitAll()
-                .antMatchers("/security-login/api/my-page").authenticated() // 이 줄을 추가하거나 수정
+                .antMatchers("/security-login/api/my-page").authenticated()
                 .antMatchers("/api/timer/**").authenticated()
                 .antMatchers("/security-login/api/admin/**").hasAuthority(UserRole.ADMIN.name())
                 .antMatchers("/profile/api/**").authenticated()
                 .anyRequest().permitAll()
+                .and()
+                .sessionManagement()  // 이 위치로 이동
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // 세션이 필요할 때만 생성
                 .and()
                 .formLogin()
                 .loginPage("/security-login/api/login")

@@ -21,11 +21,6 @@ spring:
       allowed-methods: GET,POST,PUT,DELETE,OPTIONS
       allowed-headers: "*"
       allow-credentials: true
-    view:
-      prefix: /invalid/  # 이 설정을 추가하여 View Resolver가 동작하지 않도록 설정합니다.
-      suffix: .html
-      
-
 
   jpa:
     hibernate:

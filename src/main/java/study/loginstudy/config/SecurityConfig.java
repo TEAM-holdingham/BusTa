@@ -25,12 +25,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final PrincipalOauth2UserService principalOauth2UserService;
 
-    @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .cors().configurationSource(corsConfigurationSource())
                 .and()
                 .csrf().disable()
+                .headers()
+                .contentTypeOptions() // 이 줄이 X-Content-Type-Options: nosniff 헤더를 추가합니다.
+                .and()
                 .authorizeRequests()
                 .antMatchers("/api/login").permitAll()
                 .antMatchers("/api/todolist/**").authenticated()
@@ -42,7 +44,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().permitAll()
                 .and()
                 .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // 세션이 필요할 때만 생성
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 .and()
                 .formLogin()
                 .loginPage("/security-login/api/login")

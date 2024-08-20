@@ -229,6 +229,55 @@ public class SecurityLoginController {
         }
     }
 
+    // 로그인 GET 요청 추가 (8.20)
+    @GetMapping("/api/login")
+    public ResponseEntity<?> apiLoginWithGet(
+            @RequestParam("loginId") String loginId,
+            @RequestParam("password") String password,
+            HttpServletRequest request, HttpServletResponse response) {
+        try {
+            // Spring Security의 AuthenticationManager를 사용하여 인증
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginId, password)
+            );
+
+            // 인증 성공 시 SecurityContext에 저장
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // 세션 생성
+            HttpSession session = request.getSession(true);
+
+            // 사용자 정보 조회
+            User user = userService.getLoginUserByLoginId(authentication.getName());
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+            }
+
+            // 쿠키 설정
+            ResponseCookie cookie = ResponseCookie.from("JSESSIONID", session.getId())
+                    .httpOnly(true)
+                    .secure(true)  // HTTPS를 사용하므로 true로 설정
+                    .path("/")
+                    .maxAge(7 * 24 * 60 * 60)  // 7일 동안 유효
+                    .sameSite("None")  // Cross-Site 요청에서도 쿠키 전송
+                    .build();
+
+            // 쿠키를 응답 헤더에 추가
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("status", "success");
+            responseBody.put("sessionId", session.getId());
+            responseBody.put("user", user);
+
+            return ResponseEntity.ok(responseBody);
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username/password");
+        }
+    }
+
+
 
 
 
